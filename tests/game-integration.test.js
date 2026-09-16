@@ -78,6 +78,7 @@ function loadGame(){
   context.VOCAB_UNITS=require('../js/vocabulary-data.js');
   context.VocabularyQuiz=require('../js/quiz-engine.js');
   context.VOCAB_LEVELS=require('../js/level-data.js');
+  context.CombatRules=require('../js/combat-rules.js');
   vm.createContext(context);
   const inlineScripts=[...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)];
   for(const script of inlineScripts)vm.runInContext(script[1],context,{filename:'index.html'});

@@ -17,12 +17,20 @@ test('places exactly fifteen pigs in every level', () => {
   }
 });
 
+test('places exactly one helmet pig in every level', () => {
+  for (const level of levelData.levels) {
+    const helmets = level.items.filter((item) => item.k === 'p' && item.s === 'h');
+    assert.equal(helmets.length,1,level.unitId);
+  }
+});
+
 test('uses layered mixed-material structures in every level', () => {
   for (const level of levelData.levels) {
     const blocks = level.items.filter((item) => item.k === 'b');
     const materials = new Set(blocks.map((block) => block.m));
-    assert.ok(blocks.length >= 16, `${level.unitId} needs at least 16 structural blocks`);
+    assert.ok(blocks.length >= 18, `${level.unitId} needs at least 18 structural blocks`);
     assert.ok(materials.size >= 2, `${level.unitId} needs at least two building materials`);
+    assert.ok(blocks.some((block) => block.w >= 2.2), `${level.unitId} needs a linking beam`);
   }
 });
 

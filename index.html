@@ -92,7 +92,7 @@ button{font-family:inherit;border:none;cursor:pointer}
 #pauseSheet .card{min-width:min(80vw,340px)}
 
 /* ============ 玩法说明 ============ */
-#howSheet .card{text-align:left;max-width:min(92vw,560px)}
+#howSheet .card{text-align:left;max-width:min(92vw,560px);max-height:92vh;overflow-y:auto}
 #howSheet h2{text-align:center}
 #howSheet li{margin:7px 0 7px 18px;color:#6a4a22;font-size:14.5px;line-height:1.55;font-weight:700}
 #howSheet li b{color:#c0392b}
@@ -193,11 +193,12 @@ button{font-family:inherit;border:none;cursor:pointer}
       <li><b>Earn birds:</b> Choose the missing word. Every correct answer gives you one Red Bird.</li>
       <li><b>Three chances:</b> Three wrong answers end the level. Restarting restores all three chances.</li>
       <li><b>Streak bonus:</b> Every four correct answers in a row earns a random special bird.</li>
-      <li><b>Aim and launch:</b> Drag the bird back on the slingshot, then release it.</li>
+      <li><b>Aim and launch:</b> Drag the bird back on the slingshot, then release it. Birds can bounce into several targets.</li>
       <li><b>Use abilities:</b> Tap while a bird is flying. Yellow dashes, Blue splits, Black explodes, and White drops an egg.</li>
       <li><b>Move the camera:</b> Drag empty space to pan, pinch to zoom, or double-click to reset the view.</li>
       <li><b>Win the level:</b> Defeat all 15 pigs. If you run out of birds, answer another question to earn more.</li>
-      <li><b>Match materials:</b> Yellow is strong against wood, Blue against ice, and Black against stone.</li>
+      <li><b>Use chain reactions:</b> Fast, heavy falling blocks deal more damage. Stone hits hardest, while ice breaks more easily.</li>
+      <li><b>Watch for helmets:</b> Each level has one helmet pig with twice the health of a normal pig.</li>
     </ul>
     <div style="text-align:center"><button class="wbtn" id="btnHowClose">GOT IT</button></div>
   </div>
@@ -264,6 +265,7 @@ button{font-family:inherit;border:none;cursor:pointer}
 <script src="js/vocabulary-data.js"></script>
 <script src="js/quiz-engine.js"></script>
 <script src="js/level-data.js"></script>
+<script src="js/combat-rules.js"></script>
 <script>
 'use strict';
 /* ================= 音效（WebAudio 合成，无外部资源） ================= */
@@ -629,6 +631,7 @@ var Physics = (function(){
         var rel=dot(c.normal, sub(vB,vA));
         var e=Math.max(man.a.restitution, man.b.restitution);
         c.restVel = rel < -1.0 ? -e*rel : 0;
+        man.impactSpeed=Math.max(man.impactSpeed||0,Math.max(0,-rel));
         c.acc=0; c.tacc=0;
       }
     }
@@ -1557,9 +1560,9 @@ var Game = (function(){
     pigsAlive=0; structuresLeft=0;
     curLv.items.forEach(function(o){
       if(o.k==='p'){
-        var r=LEVELS.PIG_R[o.s], hp=(o.s==='l'?150: o.s==='h'?120: o.s==='m'?90:60);
+        var r=LEVELS.PIG_R[o.s], hp=CombatRules.pigHitPoints(o.s);
         var b=new Physics.Body({shape:'circle',r:r,x:o.x,y:-o.y,density:o.s==='l'?2.2:o.s==='h'?2.6:1.4,
-          restitution:0.15,friction:0.45,hp:hp,
+          restitution:0.26,friction:0.4,hp:hp,
           userData:{kind:'pig',size:o.s,score:(o.s==='l'||o.s==='h')?8000:5000}});
         world.add(b); pigsAlive++;
       } else if(o.k==='b'){
@@ -1567,12 +1570,12 @@ var Game = (function(){
         var hp= mat==='wood'?40: mat==='ice'?20:90;
         hp*=Math.max(0.7,Math.sqrt(o.w*o.h)/0.8);
         var bb=new Physics.Body({shape:'box',hx:o.w/2,hy:o.h/2,x:o.x,y:-o.y,density:dens,
-          restitution:mat==='ice'?0.08:0.12,friction:mat==='ice'?0.25:0.55,hp:hp,
+          restitution:mat==='ice'?0.3:mat==='wood'?0.18:0.12,friction:mat==='ice'?0.2:0.5,hp:hp,
           userData:{kind:'block',mat:mat,score:mat==='wood'?500:mat==='ice'?300:800}});
         world.add(bb); structuresLeft++;
       } else if(o.k==='t'){
         var tb=new Physics.Body({shape:'box',hx:o.w/2,hy:o.h/2,x:o.x,y:-o.y,density:1.1,
-          restitution:0.1,friction:0.5,hp:12,
+          restitution:0.2,friction:0.45,hp:12,
           userData:{kind:'tnt',score:500}});
         world.add(tb); structuresLeft++;
       }
@@ -1662,7 +1665,7 @@ var Game = (function(){
     var vx=dx/d*speed, vy=dy/d*speed;
     var r=Render.birdRadius(b.type);
     var body=new Physics.Body({shape:'circle',r:r,x:b.pos.x,y:b.pos.y,density:1.5,
-      restitution:0.32,friction:0.4,noSleep:true,
+      restitution:CombatRules.birdRestitution(b.type),friction:0.24,noSleep:true,
       userData:{kind:'bird',birdType:b.type}});
     body.vel.x=vx; body.vel.y=vy;
     body.angVel=(Math.random()-0.5)*2;
@@ -1695,7 +1698,7 @@ var Game = (function(){
       for(var i=0;i<2;i++){
         var k=i===0?-1:1;
         var nb=new Physics.Body({shape:'circle',r:0.22,x:body.pos.x,y:body.pos.y,density:1.1,
-          restitution:0.3,friction:0.4,noSleep:true,
+          restitution:CombatRules.birdRestitution('B'),friction:0.22,noSleep:true,
           userData:{kind:'bird',birdType:'B',split:true,parent:b}});
         nb.vel.x=v0.x+k*1.6; nb.vel.y=v0.y-1.1+k*0.4;
         world.add(nb);
@@ -1821,7 +1824,7 @@ var Game = (function(){
       var A=m.a,B=m.b;
       // 相对速度估算冲击
       var va=A.isStatic?0:Physics.len(A.vel), vb=B.isStatic?0:Physics.len(B.vel);
-      var impact=Math.max(va,vb);
+      var impact=m.impactSpeed||Math.max(va,vb);
       if(impact<1.2)continue;
       hit(A,B,impact,m);
       hit(B,A,impact,m);
@@ -1852,9 +1855,13 @@ var Game = (function(){
     } else if(ok.kind==='egg'){
       dmg=impact*impact*3.2;
     } else if(ok.kind==='block'||ok.kind==='tnt'){
-      // 结构砸到猪/其他结构
-      var massRatio= other.mass/(target.mass+other.mass);
-      if(impact>2.4) dmg=impact*impact*massRatio*(ud.kind==='pig'?2.6:1.4);
+      // 结构砸中猪时按约化质量与相对速度计算碰撞动能。
+      if(ud.kind==='pig'){
+        dmg=CombatRules.structureImpactDamage(ok.kind==='tnt'?'tnt':ok.mat,other.mass,target.mass,impact);
+      } else {
+        var massRatio=other.mass/(target.mass+other.mass);
+        if(impact>2.4)dmg=impact*impact*massRatio*1.4;
+      }
       if(impact>3.4 && (ud.kind==='block'||ud.kind==='tnt')){
         if(ud.mat==='wood')SFX.wood(); else if(ud.mat==='ice')SFX.ice(); else if(ud.kind==='tnt'){} else SFX.stone();
       }
@@ -1990,9 +1997,7 @@ var Game = (function(){
     state='result';
     var stars=0;
     if(won){
-      stars=1;
-      if(attempt.wrongAnswers<=1&&usedBird<=12)stars=2;
-      if(attempt.wrongAnswers===0&&usedBird<=8)stars=3;
+      stars=CombatRules.starsForResult(attempt.wrongAnswers,usedBird);
       SFX.win();
       var old=progress.stars[curLv.id]||0;
       if(stars>old)progress.stars[curLv.id]=stars;
@@ -2353,7 +2358,7 @@ var UI = (function(){
     var prog=Game.getProgress();
     var lv=LEVELS.levels[Game.getLvIdx?Game.getLvIdx():0];
     $('resultBest').textContent='Best: '+(prog.best[lv.id]?prog.best[lv.id].toLocaleString():'—')+
-      (won? ' · 3 stars: no misses and 8 birds or fewer':' · Retry to restore all 3 chances');
+      (won? ' · 3 stars: no misses and 12 birds or fewer':' · Retry to restore all 3 chances');
     var spans=$('resultStars').querySelectorAll('span');
     spans.forEach(function(sp,i){
       sp.classList.remove('earned'); sp.style.animationDelay='';

@@ -31,11 +31,14 @@
     var a=[];
     [7.5,11,14.5,18].forEach(function(x){
       var top=hut(a,x,'wood',0);
-      a.push(pig(x,pigY(0,'s'),'s'),pig(x,pigY(top,'s'),'s'));
+      var topSize=x===18?'h':'s';
+      a.push(pig(x,pigY(0,'s'),'s'),pig(x,pigY(top,topSize),topSize));
     });
     a.push(
       block(6,0.15,1,0.3,'stone'),block(9.25,0.15,1,0.3,'ice'),
-      block(12.75,0.15,1,0.3,'stone'),block(16.25,0.15,1,0.3,'ice')
+      block(12.75,0.15,1,0.3,'stone'),block(16.25,0.15,1,0.3,'ice'),
+      block(9.25,PH+TOP+0.12,2.2,0.24,'ice'),
+      block(16.25,PH+TOP+0.12,2.2,0.24,'stone')
     );
     a.push(pig(6,pigY(0.3,'s'),'s'),pig(9.25,pigY(0.3,'m'),'m'),
       pig(12.75,pigY(0.3,'s'),'s'),pig(16.25,pigY(0.3,'m'),'m'),
@@ -49,10 +52,11 @@
     var t1=hut(a,8,'wood',0);hut(a,8,'stone',t1);
     var t2=hut(a,13,'stone',0);hut(a,13,'wood',t2);
     var t3=hut(a,18,'wood',0);hut(a,18,'stone',t3);
+    a.push(block(10.5,t1*2+0.12,4,0.24,'ice'));
     a.push(
       pig(8,pigY(0,'s'),'s'),pig(8,pigY(t1,'m'),'m'),pig(8,pigY(t1*2,'s'),'s'),
       pig(13,pigY(0,'m'),'m'),pig(13,pigY(t2,'s'),'s'),pig(13,pigY(t2*2,'s'),'s'),
-      pig(18,pigY(0,'s'),'s'),pig(18,pigY(t3,'m'),'m'),pig(18,pigY(t3*2,'s'),'s'),
+      pig(18,pigY(0,'s'),'s'),pig(18,pigY(t3,'m'),'m'),pig(18,pigY(t3*2,'h'),'h'),
       pig(6,pigY(0,'s'),'s'),pig(10.5,pigY(0,'s'),'s'),pig(15.5,pigY(0,'s'),'s'),
       pig(5.25,pigY(0,'s'),'s'),pig(11.25,pigY(0,'s'),'s'),pig(19.65,pigY(0,'s'),'s')
     );
@@ -65,11 +69,12 @@
     bridge(a,9.4,10.8,'ice',0);bridge(a,14.4,15.8,'wood',0);
     a.push(tnt(10.1,0.3),tnt(15.1,0.3));
     a.push(block(7.5,left+0.12,2.2,0.24,'stone'));
+    a.push(block(10.1,PH+TOP+0.12,2.2,0.24,'stone'),block(15.1,PH+TOP+0.12,2.2,0.24,'ice'));
     a.push(
       pig(7.5,pigY(0,'s'),'s'),pig(7.5,pigY(left+0.24,'m'),'m'),
-      pig(12.5,pigY(0,'s'),'s'),pig(12.5,pigY(mid,'m'),'m'),
+      pig(12.5,pigY(0,'s'),'s'),pig(12.5,pigY(mid,'h'),'h'),
       pig(17.5,pigY(0,'s'),'s'),pig(17.5,pigY(right,'m'),'m'),
-      pig(10.1,pigY(PH+TOP,'s'),'s'),pig(15.1,pigY(PH+TOP,'s'),'s'),
+      pig(10.1,pigY(PH+TOP+0.24,'s'),'s'),pig(15.1,pigY(PH+TOP+0.24,'s'),'s'),
       pig(6,pigY(0,'s'),'s'),pig(9,pigY(0,'s'),'s'),
       pig(14,pigY(0,'s'),'s'),pig(19.2,pigY(0,'s'),'s'),
       pig(5.25,pigY(0,'s'),'s'),pig(11.25,pigY(0,'s'),'s'),pig(20,pigY(0,'s'),'s')
@@ -84,13 +89,14 @@
     var p3=bridge(a,14.8,18.8,'wood',0);
     a.push(block(8.5,p1+0.7,PW,1.4,'ice'),block(12,p2+0.7,PW,1.4,'wood'),block(17,p3+0.7,PW,1.4,'ice'));
     var upper=hut(a,12,'stone',p2);
-    a.push(block(17,p3+0.12,2.4,0.24,'stone'));
+    a.push(block(17,p3+0.12,2.4,0.24,'stone'),
+      block(9.8,p1+0.12,1.2,0.24,'stone'),block(14.2,p2+0.12,1.2,0.24,'stone'));
     a.push(
       pig(7,pigY(0,'s'),'s'),pig(8.6,pigY(0,'m'),'m'),pig(7.8,pigY(p1,'s'),'s'),
       pig(10.9,pigY(0,'s'),'s'),pig(13.1,pigY(0,'s'),'s'),pig(12,pigY(p2,'m'),'m'),
       pig(15.5,pigY(0,'s'),'s'),pig(18.1,pigY(0,'m'),'m'),pig(17,pigY(p3+0.24,'s'),'s'),
       pig(6,pigY(0,'s'),'s'),pig(14.2,pigY(0,'s'),'s'),pig(19.6,pigY(0,'s'),'s'),
-      pig(12,pigY(upper,'s'),'s'),pig(5.2,pigY(0,'s'),'s'),pig(8.65,pigY(p1,'s'),'s')
+      pig(12,pigY(upper,'h'),'h'),pig(5.2,pigY(0,'s'),'s'),pig(8.65,pigY(p1,'s'),'s')
     );
     return level('5B','Direction Bridges','ice',a);
   }
@@ -101,9 +107,10 @@
     var l2=hut(a,12.5,'stone',0);hut(a,12.5,'wood',l2);
     var l3=hut(a,17.5,'ice',0);hut(a,17.5,'wood',l3);
     a.push(tnt(10,0.3),tnt(15,0.3));
+    a.push(block(10,l1*2+0.12,3.8,0.24,'stone'));
     a.push(
       pig(7.5,pigY(0,'s'),'s'),pig(7.5,pigY(l1,'s'),'s'),pig(7.5,pigY(l1*2,'m'),'m'),
-      pig(12.5,pigY(0,'m'),'m'),pig(12.5,pigY(l2,'s'),'s'),pig(12.5,pigY(l2*2,'m'),'m'),
+      pig(12.5,pigY(0,'m'),'m'),pig(12.5,pigY(l2,'s'),'s'),pig(12.5,pigY(l2*2,'h'),'h'),
       pig(17.5,pigY(0,'s'),'s'),pig(17.5,pigY(l3,'s'),'s'),pig(17.5,pigY(l3*2,'m'),'m'),
       pig(6,pigY(0,'s'),'s'),pig(10,pigY(0.6,'s'),'s'),pig(15,pigY(0.6,'s'),'s'),
       pig(5.2,pigY(0,'s'),'s'),pig(11,pigY(0,'s'),'s'),pig(19.65,pigY(0,'s'),'s')
