@@ -7,7 +7,8 @@ const vm = require('node:vm');
 
 function makeElement(id){
   const classes=new Set();
-  return {
+  let html='';
+  const element={
     id:id||'',children:[],style:{},dataset:{},textContent:'',innerHTML:'',onclick:null,
     className:'',offsetWidth:100,
     classList:{
@@ -29,6 +30,11 @@ function makeElement(id){
       },set:function(target,key,value){target[key]=value;return true;}});
     }
   };
+  Object.defineProperty(element,'innerHTML',{
+    get:function(){return html;},
+    set:function(value){html=String(value);if(html==='')element.children.length=0;}
+  });
+  return element;
 }
 
 function loadGame(){
@@ -100,8 +106,33 @@ test('starts a vocabulary level with fifteen pigs and an open question', () => {
   const quiz=app.context.Game.getQuizView();
   assert.equal(debug.pigsAlive,15);
   assert.equal(quiz.open,true);
-  assert.equal(quiz.unitId,'4A');
+  assert.equal(quiz.unitId,'1A');
   assert.equal(app.elements.questionChoices.children.length,4);
+});
+
+test('a fresh profile can start the final unit without clearing earlier levels', () => {
+  const app=loadGame();
+  app.context.Game.startLevel(23);
+  assert.equal(app.context.Game.getQuizView().unitId,'12B');
+  assert.equal(app.context.Game.dbg().pigsAlive,15);
+});
+
+test('level select exposes four chapter tabs and six open cards per chapter', () => {
+  const app=loadGame();
+  app.context.UI.showSelect();
+  assert.equal(app.elements.episodeTabs.children.length,4);
+  assert.equal(app.elements.levelGrid.children.length,6);
+  assert.ok(app.elements.levelGrid.children.every((card) => !card.className.includes('locked')));
+  app.elements.episodeTabs.children[3].onclick();
+  assert.equal(app.elements.levelGrid.children.length,6);
+  app.elements.levelGrid.children[5].onclick();
+  assert.equal(app.context.Game.getQuizView().unitId,'12B');
+});
+
+test('full campaign reports 72 available stars', () => {
+  const app=loadGame();
+  app.context.UI.showSelect();
+  assert.equal(app.elements.totalStars.textContent,'★ 0 / 72');
 });
 
 test('a correct answer earns a red bird and persists learning progress', () => {
@@ -138,7 +169,7 @@ test('starting another level discards the previous bird before loading a new rew
 
 test('every structure stays intact before the player launches the first bird', () => {
   const actual=[];
-  for(let levelIndex=0;levelIndex<6;levelIndex++){
+  for(let levelIndex=0;levelIndex<24;levelIndex++){
     const app=loadGame();
     app.context.Game.startLevel(levelIndex);
     const quiz=app.context.Game.getQuizView();
@@ -148,12 +179,12 @@ test('every structure stays intact before the player launches the first bird', (
     const debug=app.context.Game.dbg();
     actual.push({pigs:debug.pigsAlive,score:app.elements.scoreVal.textContent});
   }
-  assert.deepEqual(actual,Array.from({length:6},() => ({pigs:15,score:'0'})));
+  assert.deepEqual(actual,Array.from({length:24},() => ({pigs:15,score:'0'})));
 });
 
 test('every level opens with upright building blocks', () => {
   const tilts=[];
-  for(let levelIndex=0;levelIndex<6;levelIndex++){
+  for(let levelIndex=0;levelIndex<24;levelIndex++){
     const app=loadGame();
     app.context.Game.startLevel(levelIndex);
     const blocks=app.context.Game.dbg().world.bodies.filter((body) => body.userData.kind==='block');

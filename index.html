@@ -75,8 +75,6 @@ button{font-family:inherit;border:none;cursor:pointer}
 .lcard .stars b{color:#f5a800;font-weight:900}
 .lcard .lname{font-size:12px;line-height:1.15;color:#68441f;font-weight:900;text-align:center;min-height:28px;display:flex;align-items:center}
 .lcard .best{font-size:10px;color:#a08a5a;font-weight:700}
-.lcard.locked{filter:grayscale(.85) brightness(.75)}
-.lcard.locked .num::after{content:" 🔒";font-size:18px}
 .ep-desc{color:rgba(255,255,255,.92);text-align:center;font-size:13px;letter-spacing:2px;padding:2px 0 4px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 
 /* ============ 星星与结算 ============ */
@@ -182,7 +180,7 @@ button{font-family:inherit;border:none;cursor:pointer}
     <button id="btnHist" class="wbtn orange">HISTORY</button>
     <button id="btnHow" class="wbtn gray">HOW TO PLAY</button>
   </div>
-  <div id="titleFoot">6 UNITS · ANSWER TO EARN BIRDS · LANDSCAPE RECOMMENDED</div>
+  <div id="titleFoot">24 UNITS · ANSWER TO EARN BIRDS · ALL LEVELS OPEN</div>
 </div>
 
 <!-- 玩法说明 -->
@@ -218,7 +216,7 @@ button{font-family:inherit;border:none;cursor:pointer}
 <div id="selectScreen" class="screen hidden">
   <div class="sel-head">
     <button class="hbtn" id="btnBackTitle">‹</button>
-    <div id="totalStars">★ 0 / 18</div>
+    <div id="totalStars">★ 0 / 72</div>
     <button class="hbtn" id="btnSelSound">♪</button>
   </div>
   <div id="episodeTabs"></div>
@@ -229,7 +227,7 @@ button{font-family:inherit;border:none;cursor:pointer}
 <!-- 单词挑战 -->
 <div id="questionSheet" class="sheet-mask hidden">
   <div class="card">
-    <div id="questionUnit">Unit 4A</div>
+    <div id="questionUnit">Unit 1A</div>
     <div id="questionSentence">Choose the missing word.</div>
     <div id="questionChoices"></div>
     <div id="questionFeedback"></div>
@@ -1453,9 +1451,9 @@ var LEVELS = (function(){
 })();
 // 使用 RE0 词汇关卡替换原示例战役；旧关卡构造保留为绘制与布局参考。
 LEVELS={
-  eps:[{name:'RE0 Vocabulary Challenge',theme:'grass',desc:'Answer questions to earn birds and defeat all 15 pigs!'}],
+  eps:VOCAB_LEVELS.chapters,
   levels:VOCAB_LEVELS.levels.map(function(level,index){
-    return {id:level.id,unitId:level.unitId,name:level.name,theme:level.theme,ep:1,items:level.items,index:index};
+    return {id:level.id,unitId:level.unitId,name:level.name,theme:level.theme,ep:level.chapter,items:level.items,index:index};
   }),
   PIG_R:VOCAB_LEVELS.pigRadius
 };
@@ -2279,7 +2277,7 @@ var Game = (function(){
     getLvIdx:function(){ return curLvIdx; },
     retry:function(){ if(curLvIdx>=0)this.startLevel(curLvIdx); },
     next:function(){
-      if(curLvIdx+1<LEVELS.levels.length&&isUnlocked(curLvIdx+1))this.startLevel(curLvIdx+1);
+      if(curLvIdx+1<LEVELS.levels.length)this.startLevel(curLvIdx+1);
       else UI.showSelect();
     },
     toSelect:function(){ state='select';questionOpen=false;UI.hideQuestion();document.getElementById('hud').classList.add('hidden');UI.showSelect(); },
@@ -2293,14 +2291,10 @@ var Game = (function(){
     getQuizView:quizView,
     dbg:function(){ return {cam:cam,sling:sling,birds:birds,activeBird:activeBird,world:world,queueIdx:queueIdx,pigsAlive:pigsAlive,W:W,H:H,state:state,attempt:attempt,questionOpen:questionOpen,failureReason:failureReason}; }
   };
-  function isUnlocked(idx){
-    if(idx===0)return true;
-    var prev=LEVELS.levels[idx-1];
-    return (progress.stars[prev.id]||0)>=1;
-  }
 })();
 /* ================= UI 控制 ================= */
 var UI = (function(){
+  var activeChapter=1;
   function $(id){ return document.getElementById(id); }
   function hideAllScreens(){
     ['titleScreen','selectScreen','howSheet','pauseSheet','resultSheet'].forEach(function(id){
@@ -2318,21 +2312,33 @@ var UI = (function(){
     hideAllScreens();
     $('selectScreen').classList.remove('hidden');
     SFX.startMusic('menu');
-    $('episodeTabs').innerHTML='';
-    $('episodeTabs').style.display='none';
-    $('epDesc').textContent='6 vocabulary units · 8 words and 15 pigs per level';
-    renderGrid();
+    renderTabs();
+    renderGrid(activeChapter);
     $('totalStars').textContent='★ '+Game.totalStars()+' / '+(LEVELS.levels.length*3);
     syncSoundBtn();
   }
-  function renderGrid(){
+  function renderTabs(){
+    var tabs=$('episodeTabs');tabs.innerHTML='';tabs.style.display='flex';
+    LEVELS.eps.forEach(function(ep){
+      var tab=document.createElement('button');
+      tab.className='etab'+(ep.id===activeChapter?' on':'');
+      tab.textContent=ep.name;
+      tab.onclick=function(){
+        SFX.pop();activeChapter=ep.id;renderTabs();renderGrid(activeChapter);
+      };
+      tabs.appendChild(tab);
+    });
+    var current=LEVELS.eps.filter(function(ep){return ep.id===activeChapter;})[0]||LEVELS.eps[0];
+    $('epDesc').textContent=current?current.desc:'24 vocabulary units · 8 words and 15 pigs per level';
+  }
+  function renderGrid(chapter){
     var grid=$('levelGrid'); grid.innerHTML='';
     var prog=Game.getProgress();
     LEVELS.levels.forEach(function(l,idx){
-      var unlocked = idx===0 || (prog.stars[LEVELS.levels[idx-1].id]||0)>=1;
+      if(l.ep!==chapter)return;
       var card=document.createElement('div');
       var stars=prog.stars[l.id]||0;
-      card.className='lcard'+(unlocked?'':' locked');
+      card.className='lcard';
       var starHtml='';
       for(var s=0;s<3;s++) starHtml+= s<stars? '<b>★</b>':'★';
       var unitStats=(prog.learning&&prog.learning[l.unitId])||{};
@@ -2342,7 +2348,6 @@ var UI = (function(){
         '<div class="stars">'+starHtml+'</div>'+
         '<div class="best">Practiced '+practiced+'/8</div>';
       card.onclick=function(){
-        if(!unlocked){ SFX.pop(); return; }
         SFX.pop(); Game.startLevel(idx);
       };
       grid.appendChild(card);
@@ -2422,7 +2427,7 @@ var UI = (function(){
     var plays=hs.length, wins=0, starSum=0, totalScore=0;
     for(var k in prog.stars){ starSum+=prog.stars[k]; }
     hs.forEach(function(r){ if(r.won)wins++; totalScore+=r.score; });
-    var done=0; for(var j in prog.stars) done++;
+    var done=LEVELS.levels.filter(function(level){return (prog.stars[level.id]||0)>0;}).length;
     $('histStats').innerHTML=
       '<span class="st">PLAYS <b>'+plays+'</b></span>'+
       '<span class="st">WINS <b>'+wins+'</b></span>'+

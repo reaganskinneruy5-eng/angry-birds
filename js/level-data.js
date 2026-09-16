@@ -25,7 +25,60 @@
     a.push(block((left+right)/2,y+PH+TOP/2,right-left+0.45,TOP,mat));
     return y+PH+TOP;
   }
-  function level(id,name,theme,items){return {id:id,unitId:id,name:name,theme:theme,items:items};}
+  function tower(a,x,materials,stories,y){
+    var top=y||0;
+    for(var story=0;story<stories;story++)top=hut(a,x,materials[story%materials.length],top);
+    return top;
+  }
+  function sizedPig(a,slot,index,helmetSlot){
+    var size=index===helmetSlot?'h':slot[2];
+    a.push(pig(slot[0],pigY(slot[1],size),size));
+  }
+  function level(id,name,theme,chapter,items){
+    return {id:id,unitId:id,name:name,theme:theme,chapter:chapter,items:items};
+  }
+
+  var chapters=[
+    {id:1,name:'First Steps',desc:'Open structures and clear targets · Units 1-3',units:['1A','1B','2A','2B','3A','3B']},
+    {id:2,name:'Growing Skills',desc:'Mixed materials and linked towers · Units 4-6',units:['4A','4B','5A','5B','6A','6B']},
+    {id:3,name:'Big Ideas',desc:'Layered bridges and chain reactions · Units 7-9',units:['7A','7B','8A','8B','9A','9B']},
+    {id:4,name:'World Challenges',desc:'Dense forts and advanced demolition · Units 10-12',units:['10A','10B','11A','11B','12A','12B']}
+  ];
+
+  function buildOpenVillage(config){
+    var a=[],centers=[7.5,11,14.5,18],tops=[];
+    centers.forEach(function(x,index){
+      tops.push(hut(a,x,config.materials[index%config.materials.length],0));
+    });
+    a.push(
+      block(6,0.15,1,0.3,config.materials[1]),
+      block(9.25,0.15,1,0.3,config.materials[2]),
+      block(12.75,0.15,1,0.3,config.materials[0]),
+      block(16.25,0.15,1,0.3,config.materials[1]),
+      block(9.25,PH+TOP+0.12,2.2,0.24,config.materials[2]),
+      block(16.25,PH+TOP+0.12,2.2,0.24,config.materials[0])
+    );
+    var slots=[];
+    centers.forEach(function(x,index){
+      slots.push([x,0,index%2?'m':'s'],[x,tops[index],'s']);
+    });
+    slots.push(
+      [6,0.3,'s'],[9.25,0.3,'m'],[12.75,0.3,'s'],[16.25,0.3,'m'],
+      [4.5,0,'s'],[5.25,0,'s'],[19.65,0,'s']
+    );
+    slots.forEach(function(slot,index){sizedPig(a,slot,index,config.helmetSlot);});
+    config.tntX.forEach(function(x){a.push(tnt(x,0.3));});
+    return level(config.id,config.name,config.theme,1,a);
+  }
+
+  var firstChapter=[
+    {id:'1A',name:'Explorer Village',theme:'grass',materials:['wood','ice','wood'],helmetSlot:7,tntX:[]},
+    {id:'1B',name:'Nature Crossing',theme:'grass',materials:['ice','wood','stone'],helmetSlot:10,tntX:[]},
+    {id:'2A',name:'Athlete Arena',theme:'grass',materials:['wood','stone','ice'],helmetSlot:3,tntX:[]},
+    {id:'2B',name:'Healthy Garden',theme:'ice',materials:['ice','wood','ice'],helmetSlot:9,tntX:[]},
+    {id:'3A',name:'Lucky History Hall',theme:'grass',materials:['stone','wood','ice'],helmetSlot:5,tntX:[10.15]},
+    {id:'3B',name:'Project Market',theme:'dusk',materials:['wood','ice','stone'],helmetSlot:12,tntX:[15.35]}
+  ].map(buildOpenVillage);
 
   function build4AOpenVillage(){
     var a=[];
@@ -44,7 +97,7 @@
       pig(12.75,pigY(0.3,'s'),'s'),pig(16.25,pigY(0.3,'m'),'m'),
       pig(4.5,pigY(0,'s'),'s'),pig(5.25,pigY(0,'s'),'s'),
       pig(19.65,pigY(0,'s'),'s'));
-    return level('4A','Agreement Village','grass',a);
+    return level('4A','Agreement Village','grass',2,a);
   }
 
   function build4BWorkshopTowers(){
@@ -60,7 +113,7 @@
       pig(6,pigY(0,'s'),'s'),pig(10.5,pigY(0,'s'),'s'),pig(15.5,pigY(0,'s'),'s'),
       pig(5.25,pigY(0,'s'),'s'),pig(11.25,pigY(0,'s'),'s'),pig(19.65,pigY(0,'s'),'s')
     );
-    return level('4B','Metal Workshop','stone',a);
+    return level('4B','Metal Workshop','stone',2,a);
   }
 
   function build5AHazardYard(){
@@ -79,7 +132,7 @@
       pig(14,pigY(0,'s'),'s'),pig(19.2,pigY(0,'s'),'s'),
       pig(5.25,pigY(0,'s'),'s'),pig(11.25,pigY(0,'s'),'s'),pig(20,pigY(0,'s'),'s')
     );
-    return level('5A','Hazard Yard','dusk',a);
+    return level('5A','Hazard Yard','dusk',2,a);
   }
 
   function build5BWidePlatforms(){
@@ -98,7 +151,7 @@
       pig(6,pigY(0,'s'),'s'),pig(14.2,pigY(0,'s'),'s'),pig(19.6,pigY(0,'s'),'s'),
       pig(12,pigY(upper,'h'),'h'),pig(5.2,pigY(0,'s'),'s'),pig(8.65,pigY(p1,'s'),'s')
     );
-    return level('5B','Direction Bridges','ice',a);
+    return level('5B','Direction Bridges','ice',2,a);
   }
 
   function build6AFestivalFort(){
@@ -115,7 +168,7 @@
       pig(6,pigY(0,'s'),'s'),pig(10,pigY(0.6,'s'),'s'),pig(15,pigY(0.6,'s'),'s'),
       pig(5.2,pigY(0,'s'),'s'),pig(11,pigY(0,'s'),'s'),pig(19.65,pigY(0,'s'),'s')
     );
-    return level('6A','Speech Festival Fort','dusk',a);
+    return level('6A','Speech Festival Fort','dusk',2,a);
   }
 
   function build6BForestStronghold(){
@@ -132,12 +185,83 @@
       pig(19.7,pigY(0,'s'),'s'),pig(5.2,pigY(0,'s'),'s'),
       pig(8.6,pigY(0,'s'),'s'),pig(16,pigY(0,'s'),'s')
     );
-    return level('6B','Forest Stronghold','night',a);
+    return level('6B','Forest Stronghold','night',2,a);
   }
 
+  var secondChapter=[build4AOpenVillage(),build4BWorkshopTowers(),build5AHazardYard(),
+    build5BWidePlatforms(),build6AFestivalFort(),build6BForestStronghold()];
+
+  function buildChainBridge(config){
+    var a=[];
+    var p1=bridge(a,6.4,9.2,config.materials[0],0);
+    var p2=bridge(a,10.4,13.6,config.materials[1],0);
+    var p3=bridge(a,14.8,18.8,config.materials[2],0);
+    a.push(
+      block(8.5,p1+0.7,PW,1.4,config.materials[1]),
+      block(12,p2+0.7,PW,1.4,config.materials[2]),
+      block(17,p3+0.7,PW,1.4,config.materials[0])
+    );
+    var upper=hut(a,12,config.materials[0],p2);
+    a.push(
+      block(17,p3+0.12,2.4,0.24,config.materials[1]),
+      block(9.8,p1+0.12,1.2,0.24,config.materials[2]),
+      block(14.2,p2+0.12,1.2,0.24,config.materials[0])
+    );
+    var slots=[
+      [7,0,'s'],[8.6,0,'m'],[7.8,p1,'s'],[10.9,0,'s'],[13.1,0,'s'],
+      [12,p2,'m'],[15.5,0,'s'],[18.1,0,'m'],[17,p3+0.24,'s'],[6,0,'s'],
+      [14.2,0,'s'],[19.6,0,'s'],[12,upper,'s'],[5.2,0,'s'],[8.65,p1,'s']
+    ];
+    slots.forEach(function(slot,index){sizedPig(a,slot,index,config.helmetSlot);});
+    config.tntX.forEach(function(x){a.push(tnt(x,0.3));});
+    return level(config.id,config.name,config.theme,3,a);
+  }
+
+  var thirdChapter=[
+    {id:'7A',name:'Memory Causeway',theme:'ice',materials:['ice','wood','stone'],helmetSlot:12,tntX:[]},
+    {id:'7B',name:'Mind Trick Keep',theme:'dusk',materials:['wood','stone','ice'],helmetSlot:5,tntX:[9.8]},
+    {id:'8A',name:'Frozen Crossing',theme:'ice',materials:['ice','stone','wood'],helmetSlot:8,tntX:[]},
+    {id:'8B',name:'Laughing Gallery',theme:'grass',materials:['wood','ice','stone'],helmetSlot:2,tntX:[14.2]},
+    {id:'9A',name:'Tourist Center',theme:'stone',materials:['stone','wood','ice'],helmetSlot:11,tntX:[9.8]},
+    {id:'9B',name:'Inventor Liftworks',theme:'night',materials:['stone','ice','wood'],helmetSlot:6,tntX:[9.8,14.2]}
+  ].map(buildChainBridge);
+
+  function buildLayeredFort(config){
+    var a=[],centers=[7.5,12.5,17.5],tops=[];
+    centers.forEach(function(x,index){
+      var mats=[config.materials[index%3],config.materials[(index+1)%3]];
+      tops.push(tower(a,x,mats,2,0));
+    });
+    a.push(
+      block(10,tops[0]+0.12,3.8,0.24,config.materials[2]),
+      block(15,tops[2]+0.12,3.8,0.24,config.materials[1]),
+      block(12.5,tops[1]+0.42,6.6,0.24,config.materials[0])
+    );
+    config.tntX.forEach(function(x){a.push(tnt(x,0.3));});
+    var unit=PH+TOP;
+    var slots=[
+      [7.5,0,'s'],[7.5,unit,'s'],[7.5,tops[0],'m'],
+      [12.5,0,'m'],[12.5,unit,'s'],[12.5,tops[1]+0.54,'s'],
+      [17.5,0,'s'],[17.5,unit,'s'],[17.5,tops[2],'m'],
+      [6,0,'s'],[10,config.tntX.indexOf(10)>=0?0.6:0,'s'],
+      [15,config.tntX.indexOf(15)>=0?0.6:0,'s'],[5.2,0,'s'],[11,0,'s'],[19.65,0,'s']
+    ];
+    slots.forEach(function(slot,index){sizedPig(a,slot,index,config.helmetSlot);});
+    return level(config.id,config.name,config.theme,4,a);
+  }
+
+  var fourthChapter=[
+    {id:'10A',name:'Forecast Power Plant',theme:'dusk',materials:['wood','stone','ice'],helmetSlot:5,tntX:[10]},
+    {id:'10B',name:'Warning Depot',theme:'stone',materials:['stone','wood','ice'],helmetSlot:8,tntX:[15]},
+    {id:'11A',name:'Hidden Storehouse',theme:'night',materials:['ice','stone','wood'],helmetSlot:2,tntX:[10,15]},
+    {id:'11B',name:'Hunter Heights',theme:'stone',materials:['stone','ice','wood'],helmetSlot:13,tntX:[15]},
+    {id:'12A',name:'Rough Factory',theme:'dusk',materials:['wood','stone','ice'],helmetSlot:7,tntX:[10,15]},
+    {id:'12B',name:'Electric Mirror Citadel',theme:'night',materials:['stone','wood','ice'],helmetSlot:11,tntX:[10,15]}
+  ].map(buildLayeredFort);
+
   return {
-    levels:[build4AOpenVillage(),build4BWorkshopTowers(),build5AHazardYard(),
-      build5BWidePlatforms(),build6AFestivalFort(),build6BForestStronghold()],
+    chapters:chapters,
+    levels:firstChapter.concat(secondChapter,thirdChapter,fourthChapter),
     pigRadius:pigRadius
   };
 });

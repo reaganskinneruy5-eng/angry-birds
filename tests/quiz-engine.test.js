@@ -21,9 +21,9 @@ test('builds four unique choices from the current unit', () => {
 test('prioritizes a term missed in the current attempt over unseen terms', () => {
   const learning = Quiz.createLearningState(unit);
   const attempt = Quiz.createAttempt();
-  attempt.wrongTerms.condition = true;
+  attempt.wrongTerms.knock = true;
   const question = Quiz.buildQuestion(unit, learning, attempt, rng);
-  assert.equal(question.term, 'condition');
+  assert.equal(question.term, 'knock');
 });
 
 test('selects an unseen word before practiced words', () => {
@@ -31,15 +31,15 @@ test('selects an unseen word before practiced words', () => {
   for (const word of unit.words) {
     learning[word.term] = {shown:2,correct:1,wrong:0,nextExample:0};
   }
-  learning.dream = {shown:0,correct:0,wrong:0,nextExample:0};
+  learning.maybe = {shown:0,correct:0,wrong:0,nextExample:0};
   const question = Quiz.buildQuestion(unit, learning, Quiz.createAttempt(), rng);
-  assert.equal(question.term, 'dream');
+  assert.equal(question.term, 'maybe');
 });
 
 test('rotates all three examples before repeating', () => {
   const learning = Quiz.createLearningState(unit);
   const attempt = Quiz.createAttempt();
-  attempt.wrongTerms.agree = true;
+  attempt.wrongTerms.explore = true;
   const seen = [];
   for (let i = 0; i < 4; i++) seen.push(Quiz.buildQuestion(unit, learning, attempt, rng).sentence);
   assert.equal(new Set(seen.slice(0, 3)).size, 3);
